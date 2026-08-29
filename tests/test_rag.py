@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import io
 import os
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 
@@ -18,13 +20,29 @@ class FakeProvider:
         vectors = []
         for text in texts:
             lowered = text.lower()
-            vectors.append([1.0, 0.0] if "agent" in lowered or "ground" in lowered else [0.0, 1.0])
+            vectors.append(
+                [1.0, 0.0] if "agent" in lowered or "ground" in lowered else [0.0, 1.0]
+            )
         return vectors
 
     def chat(self, system: str, user: str) -> str:
         if not system or not user:
             raise AssertionError("Expected non-empty grounded prompt")
         return "Grounded answer based on the retrieved passage [1]."
+
+
+class FakeHttpResponse:
+    def __init__(self, payload: bytes):
+        self.payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def read(self) -> bytes:
+        return self.payload
 
 
 class RetrievalCoreTests(unittest.TestCase):
@@ -89,6 +107,120 @@ class RetrievalCoreTests(unittest.TestCase):
 
 
 class ProviderTests(unittest.TestCase):
+    def test_provider_config(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(RuntimeError):
+                providers.ProviderConfig.from_env()
+
+        env = {
+            "OPENAI_API_KEY": "test-key",
+            "OPENAI_BASE_URL": "https://example.test/v1/",
+            "EMBEDDING_MODEL": "embedding-test",
+            "CHAT_MODEL": "chat-test",
+            "PROVIDER_TIMEOUT_SECONDS": "12.5",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            config = providers.ProviderConfig.from_env()
+        self.assertEqual(config.base_url, "https://example.test/v1")
+        self.assertEqual(config.timeout_seconds, 12.5)
+
+        with patch.dict(
+            os.environ,
+            {"OPENAI_API_KEY": "key", "PROVIDER_TIMEOUT_SECONDS": "bad"},
+            clear=True,
+        ):
+            with self.assertRaises(RuntimeError):
+                providers.ProviderConfig.from_env()
+        with patch.dict(
+            os.environ,
+            {"OPENAI_API_KEY": "key", "PROVIDER_TIMEOUT_SECONDS": "0"},
+            clear=True,
+        ):
+            with self.assertRaises(RuntimeError):
+                providers.ProviderConfig.from_env()
+
+    def test_http_transport_success_and_errors(self) -> None:
+        client = providers.OpenAICompatibleClient(providers.ProviderConfig(api_key="test"))
+        with patch(
+            "urllib.request.urlopen",
+            return_value=FakeHttpResponse(b'{"data": []}'),
+        ):
+            self.assertEqual(client._post("embeddings", {"input": ["x"]}), {"data": []})
+
+        http_error = urllib.error.HTTPError(
+            "https://example.test",
+            429,
+            "rate limited",
+            None,
+            io.BytesIO(b"rate limited"),
+        )
+        with patch("urllib.request.urlopen", side_effect=http_error):
+            with self.assertRaisesRegex(RuntimeError, "Provider HTTP 429"):
+                client._post("embeddings", {})
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=urllib.error.URLError("offline"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "connection failed"):
+                client._post("embeddings", {})
+
+        with patch(
+            "urllib.request.urlopen",
+            return_value=FakeHttpResponse(b"not-json"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "invalid JSON"):
+                client._post("embeddings", {})
+
+        with patch(
+            "urllib.request.urlopen",
+            return_value=FakeHttpResponse(b"[]"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "unexpected response shape"):
+                client._post("embeddings", {})
+
+    def test_embedding_and_chat_response_validation(self) -> None:
+        client = providers.OpenAICompatibleClient(providers.ProviderConfig(api_key="test"))
+        with patch.object(
+            client,
+            "_post",
+            return_value={"data": [{"embedding": [1, 2.5]}]},
+        ):
+            self.assertEqual(client.embed_texts(["hello"]), [[1.0, 2.5]])
+        with self.assertRaises(ValueError):
+            client.embed_texts([])
+        with patch.object(client, "_post", return_value={"data": []}):
+            with self.assertRaises(RuntimeError):
+                client.embed_texts(["hello"])
+        with patch.object(client, "_post", return_value={"data": [{}]}):
+            with self.assertRaises(RuntimeError):
+                client.embed_texts(["hello"])
+
+        with patch.object(
+            client,
+            "_post",
+            return_value={"choices": [{"message": {"content": " answer "}}]},
+        ):
+            self.assertEqual(client.chat("system", "user"), "answer")
+        with self.assertRaises(ValueError):
+            client.chat("", "user")
+        with patch.object(client, "_post", return_value={"choices": []}):
+            with self.assertRaises(RuntimeError):
+                client.chat("system", "user")
+        with patch.object(client, "_post", return_value={"choices": ["bad"]}):
+            with self.assertRaises(RuntimeError):
+                client.chat("system", "user")
+        with patch.object(client, "_post", return_value={"choices": [{"message": {}}]}):
+            with self.assertRaises(RuntimeError):
+                client.chat("system", "user")
+        with patch.object(
+            client,
+            "_post",
+            return_value={"choices": [{"message": {"content": " "}}]},
+        ):
+            with self.assertRaises(RuntimeError):
+                client.chat("system", "user")
+
     def test_dense_cosine_and_semantic_rank(self) -> None:
         self.assertEqual(providers.dense_cosine([1.0, 0.0], [1.0, 0.0]), 1.0)
         ranked = providers.semantic_rank(
@@ -98,8 +230,13 @@ class ProviderTests(unittest.TestCase):
             1,
         )
         self.assertEqual(ranked[0][1], 0)
+        self.assertEqual(providers.semantic_rank([], "query", FakeProvider()), [])
         with self.assertRaises(ValueError):
             providers.dense_cosine([1.0], [1.0, 0.0])
+        with self.assertRaises(ValueError):
+            providers.semantic_rank(["x"], "query", FakeProvider(), 0)
+        with self.assertRaises(ValueError):
+            providers.semantic_rank(["x"], " ", FakeProvider())
 
     def test_grounded_answer(self) -> None:
         answer = providers.grounded_answer(
@@ -110,11 +247,6 @@ class ProviderTests(unittest.TestCase):
         self.assertIn("[1]", answer)
         with self.assertRaises(ValueError):
             providers.grounded_answer("question", [], FakeProvider())
-
-    def test_provider_config_requires_key(self) -> None:
-        with patch.dict(os.environ, {}, clear=True):
-            with self.assertRaises(RuntimeError):
-                providers.ProviderConfig.from_env()
 
 
 class ApiTests(unittest.TestCase):
