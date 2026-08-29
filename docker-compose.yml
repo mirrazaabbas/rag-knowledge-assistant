@@ -15,18 +15,28 @@ services:
     volumes:
       - rag_pgdata:/var/lib/postgresql/data
 
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.20.0
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+
   app:
     build:
       context: .
       dockerfile: Dockerfile.production
     environment:
       DATABASE_URL: postgresql://rag:rag@postgres:5432/rag
-      OTEL_ENABLED: "false"
+      OTEL_ENABLED: "true"
+      OTEL_SERVICE_NAME: rag-knowledge-assistant
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://jaeger:4318/v1/traces
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
+      jaeger:
+        condition: service_started
 
 volumes:
   rag_pgdata:
