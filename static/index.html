@@ -3,85 +3,75 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="RAG Knowledge Assistant — grounded retrieval, semantic search, and cited answer generation.">
   <title>RAG Knowledge Assistant</title>
   <style>
-    :root { font-family: Inter, system-ui, sans-serif; color-scheme: light dark; }
-    body { max-width: 860px; margin: 0 auto; padding: 48px 20px; }
-    textarea, button, select { font: inherit; }
-    textarea { box-sizing: border-box; width: 100%; min-height: 110px; padding: 12px; }
-    .controls { display: flex; gap: 10px; margin: 12px 0 24px; flex-wrap: wrap; }
-    button, select { padding: 10px 14px; }
-    .passage { border: 1px solid #8885; border-radius: 10px; padding: 14px; margin: 12px 0; }
-    .meta { opacity: .7; font-size: .9rem; }
-    #status { min-height: 1.5rem; }
-    pre { white-space: pre-wrap; }
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#07111f;--panel:#0d1b2a;--panel2:#10263a;--line:rgba(148,163,184,.18);--text:#e8eef8;--muted:#9fb0c6;--cyan:#67e8f9;--blue:#60a5fa;--green:#86efac}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 15% 10%,rgba(14,165,233,.18),transparent 28rem),radial-gradient(circle at 85% 0%,rgba(59,130,246,.16),transparent 25rem),var(--bg);color:var(--text)}a{color:inherit;text-decoration:none}button,textarea,select{font:inherit}.shell{width:min(1180px,calc(100% - 32px));margin:auto}.nav{min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:12px;font-weight:800}.logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#04111d;font-weight:900;box-shadow:0 12px 30px rgba(34,211,238,.2)}.links{display:flex;gap:22px;color:var(--muted);font-size:.94rem}.links a:hover{color:#fff}.hero{padding:72px 0 52px;display:grid;grid-template-columns:1.08fr .92fr;gap:48px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid rgba(103,232,249,.25);border-radius:999px;color:#b8f4fb;background:rgba(8,47,73,.42);font-size:.82rem;font-weight:700}h1{font-size:clamp(3rem,7vw,5.8rem);line-height:.97;letter-spacing:-.065em;margin:22px 0}.accent{color:#8ee9f5}.lead{font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:690px}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}.btn{border:1px solid var(--line);border-radius:12px;padding:12px 17px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.04);color:#fff;transition:.2s}.btn:hover{transform:translateY(-1px);border-color:rgba(103,232,249,.45)}.primary{background:linear-gradient(135deg,var(--cyan),var(--blue));color:#04111d;border:0}.pills{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}.pill{border:1px solid var(--line);border-radius:999px;padding:8px 11px;color:#b5c5d8;font-size:.84rem}.preview,.workbench{border:1px solid var(--line);border-radius:25px;background:linear-gradient(180deg,rgba(17,37,58,.94),rgba(7,17,31,.9));box-shadow:0 24px 70px rgba(0,0,0,.34)}.preview{padding:24px}.dots{display:flex;gap:7px;margin-bottom:20px}.dot{width:9px;height:9px;border-radius:50%;background:#475569}.terminal{padding:13px 14px;border-radius:12px;background:rgba(2,6,23,.58);margin:10px 0;color:#cbd5e1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem;line-height:1.55}.terminal strong{color:var(--green)}.section{padding:64px 0}.section h2{font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.045em;margin:0 0 10px}.section-copy{color:var(--muted);margin:0 0 28px;line-height:1.7}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.feature{border:1px solid var(--line);border-radius:18px;padding:22px;background:rgba(13,27,42,.72)}.feature .icon{font-size:1.45rem}.feature h3{margin:14px 0 8px}.feature p{margin:0;color:var(--muted);line-height:1.65}.workbench{padding:28px}.workbench-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}label{display:block;font-weight:800;margin-bottom:10px}textarea{width:100%;min-height:150px;resize:vertical;border-radius:14px;border:1px solid var(--line);background:#07111f;color:#fff;padding:15px;outline:none}.controls{display:grid;gap:12px;align-content:start}select{width:100%;border-radius:12px;padding:12px 13px;background:#07111f;color:#fff;border:1px solid var(--line);outline:none}textarea:focus,select:focus{border-color:rgba(103,232,249,.55);box-shadow:0 0 0 3px rgba(103,232,249,.08)}#run{width:100%}#status{min-height:1.5rem;margin:16px 0 0;color:#b9c7d8}.answer-card,.passage{border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0;background:rgba(2,6,23,.42)}.answer-card pre{white-space:pre-wrap;margin:0;font-family:inherit;line-height:1.7}.meta{color:#8ca3bd;font-size:.86rem;margin-bottom:8px}.passage p{margin-bottom:0;line-height:1.7;color:#d6dfeb}footer{border-top:1px solid var(--line);color:var(--muted);padding:28px 0 36px;margin-top:30px;font-size:.9rem}@media(max-width:900px){.hero,.workbench-grid{grid-template-columns:1fr}.features{grid-template-columns:1fr}.links{display:none}.hero{padding-top:48px}}
   </style>
 </head>
 <body>
-  <h1>RAG Knowledge Assistant</h1>
-  <p>Search the local knowledge base with transparent retrieval, or use a configured OpenAI-compatible provider for semantic retrieval and cited answer generation.</p>
-  <label for="query"><strong>Question</strong></label>
-  <textarea id="query" placeholder="How can AI agents reduce unsupported claims?"></textarea>
-  <div class="controls">
-    <select id="mode" aria-label="Search mode">
-      <option value="search">TF-IDF retrieval</option>
-      <option value="semantic-search">Semantic retrieval</option>
-      <option value="answer">Cited answer</option>
-    </select>
-    <select id="topK" aria-label="Top K">
-      <option>1</option><option>2</option><option selected>3</option><option>5</option>
-    </select>
-    <button id="run">Run</button>
-  </div>
-  <div id="status" role="status"></div>
-  <section id="answer"></section>
-  <section id="passages"></section>
-<script>
-const query = document.querySelector('#query');
-const mode = document.querySelector('#mode');
-const topK = document.querySelector('#topK');
-const run = document.querySelector('#run');
-const status = document.querySelector('#status');
-const answer = document.querySelector('#answer');
-const passages = document.querySelector('#passages');
+  <header class="shell nav">
+    <a class="brand" href="#top"><span class="logo">R</span><span>RAG Knowledge Assistant</span></a>
+    <nav class="links"><a href="#features">Capabilities</a><a href="#workbench">Workbench</a><a href="/docs">API Docs</a><a href="/health">Health</a></nav>
+  </header>
 
-function escapeHtml(value) {
-  return value.replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
-}
+  <main id="top">
+    <section class="shell hero">
+      <div>
+        <span class="eyebrow">● Source-grounded AI retrieval</span>
+        <h1>Ask better questions.<br><span class="accent">Get grounded answers.</span></h1>
+        <p class="lead">A practical Retrieval-Augmented Generation assistant that searches trusted local documents, ranks relevant passages, and can generate cited answers through a configured AI provider.</p>
+        <div class="actions"><a class="btn primary" href="#workbench">Try the assistant</a><a class="btn" href="/docs">Open API docs</a></div>
+        <div class="pills"><span class="pill">TF-IDF retrieval</span><span class="pill">Semantic retrieval</span><span class="pill">Cited answers</span><span class="pill">FastAPI</span></div>
+      </div>
+      <aside class="preview">
+        <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <div class="terminal"><strong>1. RETRIEVE</strong><br>Find the most relevant passages in the knowledge base.</div>
+        <div class="terminal"><strong>2. GROUND</strong><br>Provide trusted context before answer generation.</div>
+        <div class="terminal"><strong>3. CITE</strong><br>Return evidence-backed answers with visible source references.</div>
+      </aside>
+    </section>
 
-run.addEventListener('click', async () => {
-  const value = query.value.trim();
-  if (value.length < 3) {
-    status.textContent = 'Enter a question with at least 3 characters.';
-    return;
-  }
-  run.disabled = true;
-  status.textContent = 'Running…';
-  answer.innerHTML = '';
-  passages.innerHTML = '';
-  try {
-    const response = await fetch('/' + mode.value, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({query: value, top_k: Number(topK.value)})
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.detail || 'Request failed');
-    if (payload.answer) {
-      answer.innerHTML = '<h2>Answer</h2><pre>' + escapeHtml(payload.answer) + '</pre>';
-    }
-    passages.innerHTML = '<h2>Sources</h2>' + payload.passages.map(p =>
-      '<article class="passage"><div class="meta">#' + p.rank + ' · score ' +
-      p.score.toFixed(4) + ' · ' + escapeHtml(p.source) + '</div><p>' +
-      escapeHtml(p.text) + '</p></article>'
-    ).join('');
-    status.textContent = 'Indexed ' + payload.indexed_chunks + ' chunks.';
-  } catch (error) {
-    status.textContent = error.message;
-  } finally {
-    run.disabled = false;
-  }
-});
-</script>
+    <section class="shell section" id="features">
+      <h2>Built for reliable AI answers</h2>
+      <p class="section-copy">Transparent retrieval first, optional AI generation second.</p>
+      <div class="features">
+        <article class="feature"><div class="icon">⌕</div><h3>Local retrieval</h3><p>Searches the included knowledge base with deterministic TF-IDF ranking and no API key.</p></article>
+        <article class="feature"><div class="icon">◇</div><h3>Semantic retrieval</h3><p>Uses a configured provider to rank content by semantic relevance when enabled.</p></article>
+        <article class="feature"><div class="icon">✓</div><h3>Cited answers</h3><p>Generates grounded responses from retrieved passages and exposes the supporting sources.</p></article>
+      </div>
+    </section>
+
+    <section class="shell section" id="workbench">
+      <h2>Knowledge workbench</h2>
+      <p class="section-copy">Ask a question, choose a retrieval mode, and inspect the evidence returned by the system.</p>
+      <div class="workbench">
+        <div class="workbench-grid">
+          <div>
+            <label for="query">Question</label>
+            <textarea id="query" placeholder="How can AI agents reduce unsupported claims?"></textarea>
+          </div>
+          <div class="controls">
+            <label for="mode">Mode</label>
+            <select id="mode"><option value="search">TF-IDF retrieval</option><option value="semantic-search">Semantic retrieval</option><option value="answer">Cited answer</option></select>
+            <label for="topK">Sources</label>
+            <select id="topK"><option>1</option><option>2</option><option selected>3</option><option>5</option></select>
+            <button class="btn primary" id="run">Run query</button>
+          </div>
+        </div>
+        <div id="status" role="status"></div>
+        <section id="answer"></section>
+        <section id="passages"></section>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="shell">RAG Knowledge Assistant · Source-grounded retrieval with transparent evidence.</div></footer>
+
+  <script>
+    const query=document.querySelector('#query');const mode=document.querySelector('#mode');const topK=document.querySelector('#topK');const run=document.querySelector('#run');const status=document.querySelector('#status');const answer=document.querySelector('#answer');const passages=document.querySelector('#passages');
+    function esc(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+    run.addEventListener('click',async()=>{const value=query.value.trim();if(value.length<3){status.textContent='Enter a question with at least 3 characters.';return;}run.disabled=true;status.textContent='Running…';answer.innerHTML='';passages.innerHTML='';try{const response=await fetch('/'+mode.value,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:value,top_k:Number(topK.value)})});const payload=await response.json();if(!response.ok)throw new Error(payload.detail||'Request failed');if(payload.answer){answer.innerHTML='<h3>Answer</h3><div class="answer-card"><pre>'+esc(payload.answer)+'</pre></div>';}passages.innerHTML='<h3>Sources</h3>'+payload.passages.map(p=>'<article class="passage"><div class="meta">#'+p.rank+' · score '+p.score.toFixed(4)+' · '+esc(p.source)+'</div><p>'+esc(p.text)+'</p></article>').join('');status.textContent='Indexed '+payload.indexed_chunks+' chunks.';}catch(error){status.textContent=error.message;}finally{run.disabled=false;}});
+  </script>
 </body>
 </html>
