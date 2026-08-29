@@ -8,6 +8,8 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+import providers
+
 BASE_DIR = Path(__file__).resolve().parent
 CORE_PATH = BASE_DIR / "app.py"
 SPEC = importlib.util.spec_from_file_location("rag_core", CORE_PATH)
@@ -16,11 +18,15 @@ if SPEC is None or SPEC.loader is None:
 rag_core = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = rag_core
 SPEC.loader.exec_module(rag_core)
+provider_client_factory = providers.create_provider_client
 
 app = FastAPI(
     title="RAG Knowledge Assistant API",
-    version="1.0.0",
-    description="Source-grounded local document retrieval with transparent TF-IDF ranking.",
+    version="1.1.0",
+    description=(
+        "Source-grounded document retrieval with transparent TF-IDF ranking and optional "
+        "OpenAI-compatible semantic retrieval and cited answer generation."
+    ),
 )
 
 
@@ -42,6 +48,26 @@ class SearchResponse(BaseModel):
     passages: list[Passage]
 
 
+class AnswerResponse(SearchResponse):
+    answer: str
+
+
+def _load_corpus() -> list[object]:
+    corpus = rag_core.load_corpus(rag_core.DEFAULT_DOCS)
+    if not corpus:
+        raise ValueError("No documents are available for retrieval.")
+    return corpus
+
+
+def _passage(rank: int, score: float, chunk: object) -> Passage:
+    return Passage(
+        rank=rank,
+        score=round(score, 6),
+        source=str(Path(chunk.source).relative_to(BASE_DIR)),
+        text=chunk.text,
+    )
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -50,24 +76,60 @@ def health() -> dict[str, str]:
 @app.post("/search", response_model=SearchResponse)
 def search_documents(request: SearchRequest) -> SearchResponse:
     try:
-        corpus = rag_core.load_corpus(rag_core.DEFAULT_DOCS)
-        if not corpus:
-            raise ValueError("No documents are available for retrieval.")
+        corpus = _load_corpus()
         results = rag_core.search(corpus, request.query, request.top_k)
     except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    passages = [
-        Passage(
-            rank=rank,
-            score=round(score, 6),
-            source=str(Path(chunk.source).relative_to(BASE_DIR)),
-            text=chunk.text,
+    passages = [_passage(rank, score, chunk) for rank, (score, chunk) in enumerate(results, 1)]
+    return SearchResponse(query=request.query, indexed_chunks=len(corpus), passages=passages)
+
+
+@app.post("/semantic-search", response_model=SearchResponse)
+def semantic_search_documents(request: SearchRequest) -> SearchResponse:
+    try:
+        corpus = _load_corpus()
+        client = provider_client_factory()
+        ranked = providers.semantic_rank(
+            [chunk.text for chunk in corpus], request.query, client, request.top_k
         )
-        for rank, (score, chunk) in enumerate(results, 1)
+    except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    passages = [
+        _passage(rank, score, corpus[index])
+        for rank, (score, index) in enumerate(ranked, 1)
     ]
-    return SearchResponse(
+    return SearchResponse(query=request.query, indexed_chunks=len(corpus), passages=passages)
+
+
+@app.post("/answer", response_model=AnswerResponse)
+def answer_question(request: SearchRequest) -> AnswerResponse:
+    try:
+        corpus = _load_corpus()
+        client = provider_client_factory()
+        ranked = providers.semantic_rank(
+            [chunk.text for chunk in corpus], request.query, client, request.top_k
+        )
+        passages = [
+            _passage(rank, score, corpus[index])
+            for rank, (score, index) in enumerate(ranked, 1)
+        ]
+        answer = providers.grounded_answer(
+            request.query,
+            [passage.text for passage in passages],
+            client,
+        )
+    except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return AnswerResponse(
         query=request.query,
         indexed_chunks=len(corpus),
         passages=passages,
+        answer=answer,
     )
