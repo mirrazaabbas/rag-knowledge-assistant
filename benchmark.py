@@ -16,10 +16,7 @@ CASES = ROOT / "benchmarks" / "eval_cases.json"
 
 
 def deterministic_embedding(text: str) -> list[float]:
-    """Small deterministic feature vector for verifying the pgvector retrieval pipeline.
-
-    This is intentionally not presented as an embedding-model quality benchmark.
-    """
+    """Two-dimensional deterministic vector used only to verify pgvector plumbing."""
     lowered = text.lower()
     groups = (
         ("retrieval", "ground", "hallucination", "source", "cite"),
@@ -27,10 +24,9 @@ def deterministic_embedding(text: str) -> list[float]:
         ("health", "readiness", "monitor", "latency", "production api"),
         ("api key", "credential", "secret", "environment", "rotation"),
     )
-    vector = [float(sum(term in lowered for term in group)) for group in groups]
-    if not any(vector):
-        vector = [0.25, 0.25, 0.25, 0.25]
-    return vector
+    scores = [sum(term in lowered for term in group) for group in groups]
+    index = max(range(len(scores)), key=scores.__getitem__) if any(scores) else 0
+    return ([1.0, 0.0], [0.0, 1.0], [-1.0, 0.0], [0.0, -1.0])[index]
 
 
 def evaluate_ranking(ranked_sources: list[str], relevant: str, k: int = 3) -> tuple[float, float]:
@@ -63,7 +59,7 @@ def run_tfidf(corpus: list[object], cases: list[dict[str, str]]) -> dict[str, fl
 
 
 def run_pgvector(corpus: list[object], cases: list[dict[str, str]], dsn: str) -> dict[str, float]:
-    store = PgVectorStore(dsn, dimensions=4)
+    store = PgVectorStore(dsn, dimensions=2)
     store.ensure_schema()
     store.upsert(
         VectorRecord(Path(chunk.source).name, index, chunk.text, deterministic_embedding(chunk.text))
