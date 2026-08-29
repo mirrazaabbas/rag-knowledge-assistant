@@ -32,7 +32,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Compile sources
-        run: python -m compileall -q app.py api.py tests
+        run: python -m compileall -q app.py api.py providers.py tests
 
       - name: Lint
         run: ruff check . --output-format=github
@@ -48,3 +48,9 @@ jobs:
       - name: Import API
         run: |
           python -c "import api; assert api.health()['status'] == 'ok'"
+
+      - name: Provider configuration fails safely without secrets
+        run: |
+          python -c "import providers; \
+try: providers.ProviderConfig.from_env(); raise SystemExit(1) \
+except RuntimeError: pass"
