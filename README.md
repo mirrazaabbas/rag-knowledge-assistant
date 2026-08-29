@@ -4,6 +4,12 @@
 
 A source-grounded RAG portfolio project with a transparent local retrieval baseline, a FastAPI service, a built-in web interface, and optional OpenAI-compatible semantic retrieval and cited answer generation.
 
+## Application Preview
+
+![RAG Knowledge Assistant web interface](docs/images/rag-knowledge-assistant.png)
+
+The browser interface provides a polished entry point to local TF-IDF retrieval, semantic retrieval, cited answer generation, API documentation, and the interactive knowledge workbench.
+
 ## What it demonstrates
 
 The project keeps a fully local TF-IDF retrieval path for explainability while adding a provider boundary for embeddings and chat generation. This makes the baseline usable without credentials and lets semantic/LLM behavior be enabled without hard-coding secrets or coupling the application to one provider implementation.
