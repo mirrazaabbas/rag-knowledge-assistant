@@ -1,0 +1,1 @@
+HNSW is an approximate nearest-neighbor index commonly used for fast vector similarity search. In pgvector it can accelerate cosine-distance retrieval over embedding columns while preserving PostgreSQL persistence and metadata.
