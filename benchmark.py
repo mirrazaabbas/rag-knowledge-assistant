@@ -95,7 +95,7 @@ def main() -> int:
     args = parser.parse_args()
 
     cases = json.loads(CASES.read_text(encoding="utf-8"))
-    corpus = app.load_corpus(DOCS, chunk_size=500, overlap=0)
+    corpus = app.load_corpus(DOCS)
     results: dict[str, object] = {
         "dataset": "benchmarks/eval_cases.json",
         "cases": len(cases),
