@@ -1,6 +1,7 @@
 # RAG Knowledge Assistant
 
 [![CI](https://github.com/mirrazaabbas/rag-knowledge-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/mirrazaabbas/rag-knowledge-assistant/actions/workflows/ci.yml)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mirrazaabbas/rag-knowledge-assistant)
 
 A source-grounded RAG portfolio project with FastAPI, a transparent TF-IDF baseline, PostgreSQL/pgvector semantic retrieval, cited answer generation, Docker, CI, benchmark evidence, and deployment infrastructure.
 
@@ -99,7 +100,7 @@ This starts FastAPI with PostgreSQL 16 + pgvector. The production retrieval path
 
 ## Cloud deployment
 
-`render.yaml` defines a Docker web service plus managed PostgreSQL. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the exact deployment and verification procedure.
+Use the **Deploy to Render** button at the top of this README or create a Blueprint from `render.yaml`. The Blueprint defines a Docker web service plus managed PostgreSQL. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the exact deployment and verification procedure.
 
 A public **Live Demo** link will be added here only after the external Render deployment has actually been created and verified.
 
