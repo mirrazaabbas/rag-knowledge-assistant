@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py api.py providers.py ./
 COPY sample_docs ./sample_docs
+COPY static ./static
 
 EXPOSE 8000
 
