@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 import providers
 from observability import configure_observability
+from storage import PgVectorStore, VectorRecord
 
 BASE_DIR = Path(__file__).resolve().parent
 CORE_PATH = BASE_DIR / "app.py"
@@ -26,11 +27,11 @@ provider_client_factory = providers.create_provider_client
 
 app = FastAPI(
     title="RAG Knowledge Assistant API",
-    version="1.2.0",
+    version="1.3.0",
     description=(
         "Source-grounded document retrieval with transparent TF-IDF ranking, optional "
-        "semantic retrieval and cited answer generation, plus production-ready "
-        "pgvector and observability building blocks."
+        "semantic retrieval and cited answer generation, plus PostgreSQL/pgvector-backed "
+        "production retrieval and optional observability."
     ),
 )
 configure_observability(app)
@@ -65,13 +66,62 @@ def _load_corpus() -> list[object]:
     return corpus
 
 
+def _source_path(chunk: object) -> str:
+    return str(Path(chunk.source).relative_to(BASE_DIR))
+
+
 def _passage(rank: int, score: float, chunk: object) -> Passage:
     return Passage(
         rank=rank,
         score=round(score, 6),
-        source=str(Path(chunk.source).relative_to(BASE_DIR)),
+        source=_source_path(chunk),
         text=chunk.text,
     )
+
+
+def _semantic_passages(
+    corpus: list[object], request: SearchRequest, client: providers.ProviderClient
+) -> list[Passage]:
+    """Use pgvector when configured, otherwise keep the credential-light in-memory path."""
+    if not os.getenv("DATABASE_URL"):
+        ranked = providers.semantic_rank(
+            [chunk.text for chunk in corpus], request.query, client, request.top_k
+        )
+        return [
+            _passage(rank, score, corpus[index])
+            for rank, (score, index) in enumerate(ranked, 1)
+        ]
+
+    texts = [chunk.text for chunk in corpus]
+    vectors = client.embed_texts([*texts, request.query])
+    if len(vectors) != len(texts) + 1:
+        raise RuntimeError("Embedding provider returned an unexpected vector count.")
+    if not vectors or not vectors[0]:
+        raise RuntimeError("Embedding provider returned an empty vector.")
+    dimensions = len(vectors[0])
+    if any(len(vector) != dimensions for vector in vectors):
+        raise RuntimeError("Embedding provider returned inconsistent vector dimensions.")
+
+    store = PgVectorStore()
+    if store.dimensions != dimensions:
+        raise RuntimeError(
+            f"VECTOR_DIMENSIONS={store.dimensions} does not match provider dimensions {dimensions}."
+        )
+    store.ensure_schema()
+    store.upsert(
+        VectorRecord(_source_path(chunk), index, chunk.text, vectors[index])
+        for index, chunk in enumerate(corpus)
+    )
+    results = store.search(vectors[-1], top_k=request.top_k)
+    return [
+        Passage(
+            rank=rank,
+            score=round(float(result["score"]), 6),
+            source=str(result["source"]),
+            text=str(result["text"]),
+        )
+        for rank, result in enumerate(results, 1)
+    ]
 
 
 @app.get("/", include_in_schema=False)
@@ -115,18 +165,12 @@ def semantic_search_documents(request: SearchRequest) -> SearchResponse:
     try:
         corpus = _load_corpus()
         client = provider_client_factory()
-        ranked = providers.semantic_rank(
-            [chunk.text for chunk in corpus], request.query, client, request.top_k
-        )
+        passages = _semantic_passages(corpus, request, client)
     except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    passages = [
-        _passage(rank, score, corpus[index])
-        for rank, (score, index) in enumerate(ranked, 1)
-    ]
     return SearchResponse(query=request.query, indexed_chunks=len(corpus), passages=passages)
 
 
@@ -135,13 +179,7 @@ def answer_question(request: SearchRequest) -> AnswerResponse:
     try:
         corpus = _load_corpus()
         client = provider_client_factory()
-        ranked = providers.semantic_rank(
-            [chunk.text for chunk in corpus], request.query, client, request.top_k
-        )
-        passages = [
-            _passage(rank, score, corpus[index])
-            for rank, (score, index) in enumerate(ranked, 1)
-        ]
+        passages = _semantic_passages(corpus, request, client)
         answer = providers.grounded_answer(
             request.query,
             [passage.text for passage in passages],
