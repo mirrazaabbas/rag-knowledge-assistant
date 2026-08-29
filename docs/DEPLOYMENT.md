@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This project keeps a credential-free local TF-IDF baseline and adds an optional production path for persistent vector retrieval and tracing.
+This project keeps a credential-free local TF-IDF baseline and includes a verified PostgreSQL/pgvector retrieval path.
 
 ## Local baseline
 
@@ -19,20 +19,30 @@ No API key or database is required for `POST /search`.
 docker compose up --build
 ```
 
-This starts:
+This starts FastAPI on port `8000` and PostgreSQL 16 with pgvector on port `5432`.
 
-- FastAPI on port `8000`
-- PostgreSQL 16 with the pgvector extension on port `5432`
-- persistent database storage in the `rag_pgdata` Docker volume
+## Render deployment blueprint
 
-The Compose credentials are intentionally development-only. Use managed secrets and a rotated database password in a real deployment.
+The repository includes `render.yaml`, which defines:
+
+- a Docker-based FastAPI web service using `Dockerfile.production`
+- a managed PostgreSQL 16 database
+- private database connection injection through `DATABASE_URL`
+- `/health` as the service health-check path
+- `VECTOR_DIMENSIONS=1536` for the default embedding model
+- optional OpenAI-compatible provider settings
+
+To deploy from the Render dashboard, create a new Blueprint from this GitHub repository. Render reads `render.yaml`, creates the web service and database, and injects the database connection string. `OPENAI_API_KEY` is declared as a secret prompt and must never be committed to the repository.
+
+The application itself runs `CREATE EXTENSION IF NOT EXISTS vector` during pgvector schema initialization, so the managed database must support the vector extension.
 
 ## Environment variables
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string for pgvector storage |
-| `OPENAI_API_KEY` | OpenAI-compatible provider key for semantic retrieval / answer generation |
+| `DATABASE_URL` | PostgreSQL connection string for pgvector retrieval |
+| `VECTOR_DIMENSIONS` | Expected embedding dimensions |
+| `OPENAI_API_KEY` | OpenAI-compatible provider key for semantic retrieval / answers |
 | `OPENAI_BASE_URL` | OpenAI-compatible API base URL |
 | `EMBEDDING_MODEL` | Embedding model name |
 | `CHAT_MODEL` | Chat model name |
@@ -40,19 +50,31 @@ The Compose credentials are intentionally development-only. Use managed secrets 
 | `OTEL_ENABLED` | Enable OpenTelemetry FastAPI instrumentation |
 | `OTEL_SERVICE_NAME` | Service name emitted in traces |
 
-## Cloud deployment checklist
+## Verification after deployment
 
-Before calling a deployment production-ready:
+A deployment is not considered verified until all of these succeed:
 
-1. Use a managed PostgreSQL service with pgvector enabled.
-2. Store credentials in the platform's secret manager; never commit `.env` files.
-3. Run the automated test suite and retrieval benchmark.
+```text
+GET  /health      -> 200 {"status":"ok"}
+GET  /readiness   -> 200 and vector_store="configured"
+POST /search      -> 200 with grounded local passages
+POST /semantic-search -> 200 when provider credentials are configured
+POST /answer      -> 200 with cited answer when provider credentials are configured
+```
+
+Also verify HTTPS, application logs, database connectivity, and a clean restart/redeploy.
+
+## Production checklist
+
+1. Use managed PostgreSQL with pgvector enabled.
+2. Store credentials in the platform secret manager.
+3. Run CI and the retrieval benchmark before release.
 4. Configure HTTPS, request limits, timeouts, and logging retention.
-5. Export OpenTelemetry spans to a real collector/backend rather than the console exporter.
-6. Set up health/readiness checks against `/health` and `/readiness`.
-7. Add provider budget/rate-limit controls and alerting.
-8. Run prompt-injection and untrusted-document tests before accepting arbitrary uploads.
+5. Export OpenTelemetry spans to a real collector/backend before claiming production tracing.
+6. Use `/health` and `/readiness` for platform checks.
+7. Add provider budget/rate-limit controls before high-volume public use.
+8. Run prompt-injection tests before accepting arbitrary user-uploaded documents.
 
-## Current status
+## Accuracy boundary
 
-The repository contains deployment-ready building blocks, but no public cloud URL is claimed here until a real deployment is created and verified.
+Infrastructure-as-code is now committed, and the pgvector path is verified in GitHub Actions. A public live-demo URL is only added to the README after the external cloud deployment itself has been created and checked.

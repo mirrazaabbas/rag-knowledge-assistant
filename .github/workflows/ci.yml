@@ -32,7 +32,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Compile sources
-        run: python -m compileall -q app.py api.py providers.py storage.py tests
+        run: python -m compileall -q app.py api.py providers.py storage.py benchmark.py tests
 
       - name: Lint
         run: ruff check . --output-format=github
@@ -93,3 +93,12 @@ jobs:
 
       - name: Run pgvector integration tests
         run: python -m unittest tests.test_pgvector_integration -v
+
+      - name: Run retrieval benchmark
+        run: python benchmark.py --database-url "$DATABASE_URL" --output benchmark-results.json
+
+      - name: Upload benchmark evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrieval-benchmark-results
+          path: benchmark-results.json
