@@ -46,11 +46,11 @@ jobs:
         run: python app.py "How can AI agents reduce unsupported claims?" --top-k 1
 
       - name: Import API
-        run: |
-          python -c "import api; assert api.health()['status'] == 'ok'"
+        run: python -c "import api; assert api.health()['status'] == 'ok'"
 
       - name: Provider configuration fails safely without secrets
         run: |
-          python -c "import providers; \
-try: providers.ProviderConfig.from_env(); raise SystemExit(1) \
-except RuntimeError: pass"
+          if env -u OPENAI_API_KEY python -c "import providers; providers.ProviderConfig.from_env()"; then
+            echo "Expected missing-key configuration to fail"
+            exit 1
+          fi
