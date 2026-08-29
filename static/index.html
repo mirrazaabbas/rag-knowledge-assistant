@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RAG Knowledge Assistant</title>
+  <style>
+    :root { font-family: Inter, system-ui, sans-serif; color-scheme: light dark; }
+    body { max-width: 860px; margin: 0 auto; padding: 48px 20px; }
+    textarea, button, select { font: inherit; }
+    textarea { box-sizing: border-box; width: 100%; min-height: 110px; padding: 12px; }
+    .controls { display: flex; gap: 10px; margin: 12px 0 24px; flex-wrap: wrap; }
+    button, select { padding: 10px 14px; }
+    .passage { border: 1px solid #8885; border-radius: 10px; padding: 14px; margin: 12px 0; }
+    .meta { opacity: .7; font-size: .9rem; }
+    #status { min-height: 1.5rem; }
+    pre { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>RAG Knowledge Assistant</h1>
+  <p>Search the local knowledge base with transparent retrieval, or use a configured OpenAI-compatible provider for semantic retrieval and cited answer generation.</p>
+  <label for="query"><strong>Question</strong></label>
+  <textarea id="query" placeholder="How can AI agents reduce unsupported claims?"></textarea>
+  <div class="controls">
+    <select id="mode" aria-label="Search mode">
+      <option value="search">TF-IDF retrieval</option>
+      <option value="semantic-search">Semantic retrieval</option>
+      <option value="answer">Cited answer</option>
+    </select>
+    <select id="topK" aria-label="Top K">
+      <option>1</option><option>2</option><option selected>3</option><option>5</option>
+    </select>
+    <button id="run">Run</button>
+  </div>
+  <div id="status" role="status"></div>
+  <section id="answer"></section>
+  <section id="passages"></section>
+<script>
+const query = document.querySelector('#query');
+const mode = document.querySelector('#mode');
+const topK = document.querySelector('#topK');
+const run = document.querySelector('#run');
+const status = document.querySelector('#status');
+const answer = document.querySelector('#answer');
+const passages = document.querySelector('#passages');
+
+function escapeHtml(value) {
+  return value.replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+
+run.addEventListener('click', async () => {
+  const value = query.value.trim();
+  if (value.length < 3) {
+    status.textContent = 'Enter a question with at least 3 characters.';
+    return;
+  }
+  run.disabled = true;
+  status.textContent = 'Running…';
+  answer.innerHTML = '';
+  passages.innerHTML = '';
+  try {
+    const response = await fetch('/' + mode.value, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({query: value, top_k: Number(topK.value)})
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || 'Request failed');
+    if (payload.answer) {
+      answer.innerHTML = '<h2>Answer</h2><pre>' + escapeHtml(payload.answer) + '</pre>';
+    }
+    passages.innerHTML = '<h2>Sources</h2>' + payload.passages.map(p =>
+      '<article class="passage"><div class="meta">#' + p.rank + ' · score ' +
+      p.score.toFixed(4) + ' · ' + escapeHtml(p.source) + '</div><p>' +
+      escapeHtml(p.text) + '</p></article>'
+    ).join('');
+    status.textContent = 'Indexed ' + payload.indexed_chunks + ' chunks.';
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    run.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
