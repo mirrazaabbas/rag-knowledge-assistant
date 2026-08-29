@@ -13,7 +13,12 @@ import app
 class RetrievalCoreTests(unittest.TestCase):
     def test_tokenization_and_chunking(self) -> None:
         self.assertEqual(app.tokens("AI agents, RAG!"), ["agents", "rag"])
-        self.assertEqual(app.chunk_text("one two three four five", size=3, overlap=1), ["one two three", "three four five", "five"])
+        chunks = app.chunk_text(
+            "one two three four five",
+            size=3,
+            overlap=1,
+        )
+        self.assertEqual(chunks, ["one two three", "three four five", "five"])
 
     def test_invalid_chunk_settings(self) -> None:
         with self.assertRaises(ValueError):
@@ -24,8 +29,14 @@ class RetrievalCoreTests(unittest.TestCase):
     def test_corpus_loading_and_search(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp)
-            (folder / "rag.md").write_text("RAG retrieves trusted context for grounded answers.", encoding="utf-8")
-            (folder / "python.txt").write_text("Python is a programming language.", encoding="utf-8")
+            (folder / "rag.md").write_text(
+                "RAG retrieves trusted context for grounded answers.",
+                encoding="utf-8",
+            )
+            (folder / "python.txt").write_text(
+                "Python is a programming language.",
+                encoding="utf-8",
+            )
             corpus = app.load_corpus(folder)
             self.assertEqual(len(corpus), 2)
             results = app.search(corpus, "trusted grounded context", 1)
@@ -43,7 +54,11 @@ class RetrievalCoreTests(unittest.TestCase):
                 app.load_corpus(file_path)
 
     def test_search_validation(self) -> None:
-        chunk = app.Chunk("a.md", "trusted context", app.Counter(app.tokens("trusted context")))
+        chunk = app.Chunk(
+            "a.md",
+            "trusted context",
+            app.Counter(app.tokens("trusted context")),
+        )
         self.assertEqual(app.search([], "query"), [])
         with self.assertRaises(ValueError):
             app.search([chunk], "query", 0)
@@ -69,14 +84,22 @@ class ApiTests(unittest.TestCase):
     def test_search_endpoint(self) -> None:
         response = self.client.post(
             "/search",
-            json={"query": "How can AI agents reduce unsupported claims?", "top_k": 1},
+            json={
+                "query": "How can AI agents reduce unsupported claims?",
+                "top_k": 1,
+            },
         )
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["query"], "How can AI agents reduce unsupported claims?")
+        self.assertEqual(
+            payload["query"],
+            "How can AI agents reduce unsupported claims?",
+        )
         self.assertGreaterEqual(payload["indexed_chunks"], 1)
         self.assertEqual(len(payload["passages"]), 1)
-        self.assertTrue(payload["passages"][0]["source"].startswith("sample_docs/"))
+        self.assertTrue(
+            payload["passages"][0]["source"].startswith("sample_docs/")
+        )
 
     def test_request_validation(self) -> None:
         response = self.client.post("/search", json={"query": "x", "top_k": 0})
