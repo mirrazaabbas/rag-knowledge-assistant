@@ -1,1 +1,6 @@
-[]
+[
+  {"query":"How does retrieval grounding reduce hallucinations?","relevant_source":"grounding.md"},
+  {"query":"Why use HNSW for vector search?","relevant_source":"vector_search.md"},
+  {"query":"What should a production API expose for health monitoring?","relevant_source":"operations.md"},
+  {"query":"How should API keys and database credentials be handled?","relevant_source":"security.md"}
+]
