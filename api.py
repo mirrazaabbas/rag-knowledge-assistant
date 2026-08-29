@@ -6,12 +6,14 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 import providers
 
 BASE_DIR = Path(__file__).resolve().parent
 CORE_PATH = BASE_DIR / "app.py"
+UI_PATH = BASE_DIR / "static" / "index.html"
 SPEC = importlib.util.spec_from_file_location("rag_core", CORE_PATH)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError("Unable to load RAG retrieval core.")
@@ -66,6 +68,13 @@ def _passage(rank: int, score: float, chunk: object) -> Passage:
         source=str(Path(chunk.source).relative_to(BASE_DIR)),
         text=chunk.text,
     )
+
+
+@app.get("/", include_in_schema=False)
+def home() -> FileResponse:
+    if not UI_PATH.is_file():
+        raise HTTPException(status_code=404, detail="Web interface is not available.")
+    return FileResponse(UI_PATH)
 
 
 @app.get("/health")
