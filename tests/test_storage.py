@@ -11,6 +11,24 @@ class PgVectorStoreTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "DATABASE_URL"):
                 PgVectorStore()
 
+    def test_reads_dimensions_from_environment(self):
+        with patch.dict(
+            os.environ,
+            {"DATABASE_URL": "postgresql://example", "VECTOR_DIMENSIONS": "3"},
+            clear=True,
+        ):
+            store = PgVectorStore()
+        self.assertEqual(store.dimensions, 3)
+
+    def test_rejects_invalid_environment_dimensions(self):
+        with patch.dict(
+            os.environ,
+            {"DATABASE_URL": "postgresql://example", "VECTOR_DIMENSIONS": "bad"},
+            clear=True,
+        ):
+            with self.assertRaisesRegex(ValueError, "VECTOR_DIMENSIONS"):
+                PgVectorStore()
+
     def test_rejects_invalid_dimensions(self):
         with self.assertRaisesRegex(ValueError, "dimensions"):
             PgVectorStore("postgresql://example", dimensions=0)
