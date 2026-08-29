@@ -25,7 +25,7 @@ class ProviderConfig:
     timeout_seconds: float = 30.0
 
     @classmethod
-    def from_env(cls) -> "ProviderConfig":
+    def from_env(cls) -> ProviderConfig:
         api_key = os.getenv("OPENAI_API_KEY", "").strip()
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY is not configured.")
@@ -128,7 +128,7 @@ def create_provider_client() -> OpenAICompatibleClient:
 def dense_cosine(a: list[float], b: list[float]) -> float:
     if len(a) != len(b) or not a:
         raise ValueError("Embedding vectors must be non-empty and have equal dimensions.")
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=True))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(y * y for y in b))
     return dot / (norm_a * norm_b) if norm_a and norm_b else 0.0
