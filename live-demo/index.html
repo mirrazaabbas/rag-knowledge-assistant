@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RAG Knowledge Assistant — Live Browser Demo</title>
+  <meta name="description" content="Credential-free browser demo of the RAG Knowledge Assistant retrieval baseline." />
+  <style>
+    :root { color-scheme: dark; --bg:#07111f; --panel:#0e1b2d; --panel2:#13243b; --text:#eef6ff; --muted:#9fb2c8; --line:#27405f; --accent:#68d7ff; --good:#7cf2b4; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:radial-gradient(circle at top right,#113051 0,#07111f 42%,#050b14 100%); color:var(--text); min-height:100vh; }
+    a { color:var(--accent); }
+    .wrap { max-width:1100px; margin:0 auto; padding:36px 20px 60px; }
+    .badge { display:inline-flex; gap:8px; align-items:center; border:1px solid var(--line); background:rgba(14,27,45,.78); border-radius:999px; padding:8px 12px; color:var(--good); font-size:13px; font-weight:700; }
+    h1 { font-size:clamp(38px,7vw,72px); line-height:.98; margin:22px 0 16px; letter-spacing:-.045em; }
+    .lead { max-width:760px; color:var(--muted); font-size:18px; line-height:1.6; }
+    .grid { display:grid; grid-template-columns:1.25fr .75fr; gap:18px; margin-top:32px; }
+    .card { border:1px solid var(--line); background:linear-gradient(180deg,rgba(19,36,59,.94),rgba(9,20,34,.94)); border-radius:22px; padding:22px; box-shadow:0 18px 55px rgba(0,0,0,.22); }
+    .card h2 { margin:0 0 8px; font-size:19px; }
+    .small { color:var(--muted); font-size:13px; line-height:1.5; }
+    label { display:block; font-weight:800; margin:20px 0 8px; }
+    .search { display:flex; gap:10px; }
+    input { flex:1; min-width:0; border:1px solid #355274; border-radius:14px; background:#081321; color:var(--text); padding:15px 16px; font-size:16px; outline:none; }
+    input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(104,215,255,.12); }
+    button { border:0; border-radius:14px; background:linear-gradient(135deg,#61d6ff,#7cf2b4); color:#06111b; font-weight:900; padding:0 20px; cursor:pointer; font-size:15px; }
+    button:hover { filter:brightness(1.06); }
+    .examples { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .example { border:1px solid var(--line); background:#0c1a2b; color:#bfd0e3; border-radius:999px; padding:8px 10px; font-size:12px; cursor:pointer; }
+    .result { margin-top:14px; border:1px solid #294969; border-radius:16px; background:rgba(6,17,29,.72); padding:15px; }
+    .result-head { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:12px; margin-bottom:8px; }
+    .result-text { line-height:1.55; }
+    .score { color:var(--good); font-weight:800; }
+    .empty { color:var(--muted); padding:18px 0 4px; }
+    ul { margin:14px 0 0; padding-left:19px; color:#c9d8e8; line-height:1.65; }
+    .metric { display:flex; justify-content:space-between; gap:16px; border-top:1px solid var(--line); padding:12px 0; }
+    .metric:first-of-type { margin-top:12px; }
+    .metric span:last-child { font-weight:900; color:var(--good); }
+    .footer { margin-top:26px; color:var(--muted); font-size:13px; text-align:center; }
+    code { color:#b7ebff; }
+    @media (max-width:800px){ .grid{grid-template-columns:1fr;} .search{flex-direction:column;} button{padding:14px 18px;} }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="badge">● LIVE · Credential-free retrieval baseline</div>
+    <h1>RAG Knowledge<br/>Assistant</h1>
+    <p class="lead">A recruiter-friendly live browser demo of the project's transparent retrieval baseline. It runs entirely in your browser with no API key, no external model call, and no hidden backend.</p>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Try retrieval</h2>
+        <div class="small">This demo tokenizes the bundled source, computes TF-IDF-style relevance across sentence chunks, and ranks matching passages with cosine similarity.</div>
+        <label for="q">Ask a question</label>
+        <div class="search">
+          <input id="q" value="How can AI agents reduce unsupported claims?" autocomplete="off" />
+          <button id="go">Search</button>
+        </div>
+        <div class="examples">
+          <span class="example">How can agents stay reliable?</span>
+          <span class="example">Why use retrieval augmented generation?</span>
+          <span class="example">When should humans approve actions?</span>
+        </div>
+        <div id="results"></div>
+      </div>
+
+      <aside class="card">
+        <h2>What this proves</h2>
+        <ul>
+          <li>Working, public, zero-secret retrieval demo.</li>
+          <li>Transparent ranking rather than a mocked screenshot.</li>
+          <li>Same source-grounding idea used by the full FastAPI project.</li>
+          <li>The production repository separately verifies PostgreSQL/pgvector, HNSW, Docker, CI benchmarks, OpenTelemetry/Jaeger, and prompt-injection boundaries.</li>
+        </ul>
+        <div class="metric"><span>Recall@3 (CI sample)</span><span>1.00</span></div>
+        <div class="metric"><span>pgvector MRR (CI sample)</span><span>1.00</span></div>
+        <div class="metric"><span>Production container CI</span><span>PASS</span></div>
+        <p class="small">Benchmark values are repository CI evidence using deterministic local vectors for pipeline/ranking verification, not a claim about commercial embedding-model quality.</p>
+      </aside>
+    </section>
+
+    <p class="footer">Source: <a href="https://github.com/mirrazaabbas/rag-knowledge-assistant">mirrazaabbas/rag-knowledge-assistant</a> · <a href="https://github.com/mirrazaabbas/rag-knowledge-assistant/blob/main/ARCHITECTURE.md">Architecture</a> · <a href="https://github.com/mirrazaabbas/rag-knowledge-assistant/blob/main/docs/BENCHMARKING.md">Benchmark method</a></p>
+  </main>
+
+<script>
+const SOURCE = `AI agents combine a model with tools, state, planning, and feedback loops. Reliability improves when the system retrieves trusted context, validates tool inputs, limits permissions, records sources, and evaluates outputs. Retrieval-Augmented Generation can reduce unsupported claims by giving the model relevant source material before answer generation. Human approval should be used for high-impact actions.`;
+const chunks = SOURCE.match(/[^.!?]+[.!?]+/g).map((s,i)=>({source:'sample_docs/ai_agents.md', index:i, text:s.trim()}));
+const stop = new Set('a an and are as at be before by can for from giving has have how in is it of on or should the this to use used when with'.split(' '));
+const tokenize = text => (text.toLowerCase().match(/[a-z0-9-]+/g)||[]).filter(t=>t.length>1 && !stop.has(t));
+const tf = tokens => { const m={}; for(const t of tokens)m[t]=(m[t]||0)+1; const n=tokens.length||1; for(const k in m)m[k]/=n; return m; };
+const docs = chunks.map(c=>tokenize(c.text));
+const vocab = [...new Set(docs.flat())];
+const idf = Object.fromEntries(vocab.map(term=>[term,Math.log((1+docs.length)/(1+docs.filter(d=>d.includes(term)).length))+1]));
+function vec(tokens){ const f=tf(tokens), out={}; for(const [k,v] of Object.entries(f))out[k]=v*(idf[k]||1); return out; }
+function cosine(a,b){ let dot=0,na=0,nb=0; for(const v of Object.values(a))na+=v*v; for(const v of Object.values(b))nb+=v*v; for(const [k,v] of Object.entries(a))dot+=v*(b[k]||0); return na&&nb?dot/(Math.sqrt(na)*Math.sqrt(nb)):0; }
+function search(){
+  const q=document.getElementById('q').value.trim();
+  const host=document.getElementById('results');
+  if(!q){host.innerHTML='<div class="empty">Enter a question to search.</div>';return;}
+  const qv=vec(tokenize(q));
+  const ranked=chunks.map((c,i)=>({...c,score:cosine(qv,vec(docs[i]))})).sort((a,b)=>b.score-a.score).slice(0,3);
+  host.innerHTML=ranked.map((r,i)=>`<div class="result"><div class="result-head"><span>#${i+1} · ${r.source}</span><span class="score">score ${r.score.toFixed(3)}</span></div><div class="result-text">${r.text}</div></div>`).join('');
+}
+document.getElementById('go').addEventListener('click',search);
+document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')search();});
+document.querySelectorAll('.example').forEach(el=>el.addEventListener('click',()=>{document.getElementById('q').value=el.textContent;search();}));
+search();
+</script>
+</body>
+</html>
