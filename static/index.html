@@ -6,71 +6,92 @@
   <meta name="description" content="RAG Knowledge Assistant — grounded retrieval, semantic search, and cited answer generation.">
   <title>RAG Knowledge Assistant</title>
   <style>
-    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#07111f;--panel:#0d1b2a;--panel2:#10263a;--line:rgba(148,163,184,.18);--text:#e8eef8;--muted:#9fb0c6;--cyan:#67e8f9;--blue:#60a5fa;--green:#86efac}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 15% 10%,rgba(14,165,233,.18),transparent 28rem),radial-gradient(circle at 85% 0%,rgba(59,130,246,.16),transparent 25rem),var(--bg);color:var(--text)}a{color:inherit;text-decoration:none}button,textarea,select{font:inherit}.shell{width:min(1180px,calc(100% - 32px));margin:auto}.nav{min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:12px;font-weight:800}.logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#04111d;font-weight:900;box-shadow:0 12px 30px rgba(34,211,238,.2)}.links{display:flex;gap:22px;color:var(--muted);font-size:.94rem}.links a:hover{color:#fff}.hero{padding:72px 0 52px;display:grid;grid-template-columns:1.08fr .92fr;gap:48px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid rgba(103,232,249,.25);border-radius:999px;color:#b8f4fb;background:rgba(8,47,73,.42);font-size:.82rem;font-weight:700}h1{font-size:clamp(3rem,7vw,5.8rem);line-height:.97;letter-spacing:-.065em;margin:22px 0}.accent{color:#8ee9f5}.lead{font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:690px}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}.btn{border:1px solid var(--line);border-radius:12px;padding:12px 17px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.04);color:#fff;transition:.2s}.btn:hover{transform:translateY(-1px);border-color:rgba(103,232,249,.45)}.primary{background:linear-gradient(135deg,var(--cyan),var(--blue));color:#04111d;border:0}.pills{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}.pill{border:1px solid var(--line);border-radius:999px;padding:8px 11px;color:#b5c5d8;font-size:.84rem}.preview,.workbench{border:1px solid var(--line);border-radius:25px;background:linear-gradient(180deg,rgba(17,37,58,.94),rgba(7,17,31,.9));box-shadow:0 24px 70px rgba(0,0,0,.34)}.preview{padding:24px}.dots{display:flex;gap:7px;margin-bottom:20px}.dot{width:9px;height:9px;border-radius:50%;background:#475569}.terminal{padding:13px 14px;border-radius:12px;background:rgba(2,6,23,.58);margin:10px 0;color:#cbd5e1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem;line-height:1.55}.terminal strong{color:var(--green)}.section{padding:64px 0}.section h2{font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.045em;margin:0 0 10px}.section-copy{color:var(--muted);margin:0 0 28px;line-height:1.7}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.feature{border:1px solid var(--line);border-radius:18px;padding:22px;background:rgba(13,27,42,.72)}.feature .icon{font-size:1.45rem}.feature h3{margin:14px 0 8px}.feature p{margin:0;color:var(--muted);line-height:1.65}.workbench{padding:28px}.workbench-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}label{display:block;font-weight:800;margin-bottom:10px}textarea{width:100%;min-height:150px;resize:vertical;border-radius:14px;border:1px solid var(--line);background:#07111f;color:#fff;padding:15px;outline:none}.controls{display:grid;gap:12px;align-content:start}select{width:100%;border-radius:12px;padding:12px 13px;background:#07111f;color:#fff;border:1px solid var(--line);outline:none}textarea:focus,select:focus{border-color:rgba(103,232,249,.55);box-shadow:0 0 0 3px rgba(103,232,249,.08)}#run{width:100%}#status{min-height:1.5rem;margin:16px 0 0;color:#b9c7d8}.answer-card,.passage{border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0;background:rgba(2,6,23,.42)}.answer-card pre{white-space:pre-wrap;margin:0;font-family:inherit;line-height:1.7}.meta{color:#8ca3bd;font-size:.86rem;margin-bottom:8px}.passage p{margin-bottom:0;line-height:1.7;color:#d6dfeb}footer{border-top:1px solid var(--line);color:var(--muted);padding:28px 0 36px;margin-top:30px;font-size:.9rem}@media(max-width:900px){.hero,.workbench-grid{grid-template-columns:1fr}.features{grid-template-columns:1fr}.links{display:none}.hero{padding-top:48px}}
+    :root{
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      --bg:#f6f9fc;--surface:#ffffff;--surface2:#eef5ff;--navy:#0b1830;--text:#17233b;--muted:#66748a;
+      --blue:#3155d9;--blue2:#5b7cff;--cyan:#25c2d5;--line:#dce4ef;--green:#21a46b;--shadow:0 24px 70px rgba(37,55,92,.12)
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#f8fbff 0,#f4f7fb 68%,#fff 100%);color:var(--text)}
+    a{color:inherit;text-decoration:none}button,textarea,select{font:inherit}.shell{width:min(1180px,calc(100% - 34px));margin:auto}
+    .nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:12px;font-weight:800;color:var(--navy)}
+    .mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:white;background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 10px 28px rgba(49,85,217,.24);font-weight:900}
+    .links{display:flex;align-items:center;gap:26px;font-size:.93rem;color:#536178}.links a:hover{color:var(--blue)}
+    .nav-cta{padding:10px 15px;border-radius:11px;background:var(--navy);color:#fff!important;font-weight:700}
+    .hero{display:grid;grid-template-columns:1.02fr .98fr;gap:60px;align-items:center;min-height:610px;padding:64px 0 70px}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border-radius:999px;background:#edf2ff;color:var(--blue);font-size:.8rem;font-weight:800;letter-spacing:.02em}.pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(33,164,107,.10)}
+    h1{font-size:clamp(3.2rem,6.8vw,6.2rem);line-height:.98;letter-spacing:-.065em;margin:22px 0;color:var(--navy)}h1 .grad{background:linear-gradient(90deg,var(--blue),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .lead{max-width:690px;font-size:1.08rem;line-height:1.78;color:var(--muted)}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}.btn{border:1px solid var(--line);background:#fff;color:var(--navy);padding:12px 17px;border-radius:12px;font-weight:800;cursor:pointer;transition:.2s;box-shadow:0 8px 22px rgba(37,55,92,.06)}.btn:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(37,55,92,.11)}.primary{border:0;color:white;background:linear-gradient(135deg,var(--blue),var(--blue2))}.micro{display:flex;gap:17px;flex-wrap:wrap;margin-top:25px;color:#758196;font-size:.86rem}.micro span::before{content:'✓';color:var(--green);font-weight:900;margin-right:7px}
+    .hero-card{position:relative;border:1px solid #e0e7f2;border-radius:28px;background:rgba(255,255,255,.94);padding:26px;box-shadow:var(--shadow);overflow:hidden}.hero-card::before{content:'';position:absolute;inset:-80px auto auto -80px;width:210px;height:210px;border-radius:50%;background:rgba(49,85,217,.08)}.hero-card::after{content:'';position:absolute;right:-80px;bottom:-90px;width:220px;height:220px;border-radius:50%;background:rgba(37,194,213,.09)}
+    .window{position:relative;z-index:1}.window-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.dots{display:flex;gap:7px}.dot{width:9px;height:9px;border-radius:50%;background:#cbd5e1}.status-badge{font-size:.75rem;font-weight:800;color:#16845a;background:#eaf8f1;border-radius:999px;padding:6px 9px}.flow{display:grid;gap:12px}.flow-card{display:grid;grid-template-columns:44px 1fr;gap:13px;align-items:center;padding:14px;border:1px solid #e4e9f1;border-radius:15px;background:#fbfdff}.flow-icon{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-weight:900;color:var(--blue);background:#edf2ff}.flow-card strong{display:block;color:var(--navy);margin-bottom:3px}.flow-card span{color:var(--muted);font-size:.87rem;line-height:1.45}.source-chip{margin-top:14px;border:1px dashed #cdd8e8;border-radius:13px;padding:11px 13px;background:#f8fbff;font-size:.82rem;color:#617087}.source-chip b{color:var(--blue)}
+    .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}.strip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}.stat{padding:26px 20px;text-align:center;border-right:1px solid var(--line)}.stat:last-child{border-right:0}.stat b{display:block;color:var(--navy);font-size:1.2rem}.stat span{color:var(--muted);font-size:.84rem}
+    .section{padding:78px 0}.section-head{max-width:720px;margin-bottom:32px}.kicker{font-size:.8rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:var(--blue)}h2{font-size:clamp(2.2rem,4.5vw,3.7rem);letter-spacing:-.05em;line-height:1.02;color:var(--navy);margin:10px 0 12px}.section-copy{color:var(--muted);line-height:1.75;margin:0}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:17px}.feature{padding:24px;border:1px solid var(--line);border-radius:19px;background:#fff;box-shadow:0 10px 30px rgba(37,55,92,.05)}.feature-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:13px;background:#edf2ff;color:var(--blue);font-size:1.2rem;font-weight:900}.feature h3{margin:17px 0 8px;color:var(--navy)}.feature p{margin:0;color:var(--muted);line-height:1.65}
+    .workspace-wrap{background:linear-gradient(180deg,#eef4ff,#f8fbff);border-top:1px solid #e2e9f4;border-bottom:1px solid #e2e9f4}.workspace{border:1px solid #dce5f0;border-radius:25px;background:white;box-shadow:var(--shadow);overflow:hidden}.workspace-head{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:20px 22px;border-bottom:1px solid var(--line)}.workspace-title{font-weight:900;color:var(--navy)}.api-links{display:flex;gap:10px;flex-wrap:wrap}.api-links a{font-size:.82rem;padding:8px 10px;border-radius:9px;background:#f3f6fb;color:#526176}.workspace-body{display:grid;grid-template-columns:1fr 300px;gap:18px;padding:22px}label{display:block;font-weight:800;color:var(--navy);margin-bottom:9px}textarea{width:100%;min-height:165px;resize:vertical;border:1px solid #d7e0ec;border-radius:14px;background:#fbfdff;padding:15px;color:var(--text);outline:none}.controls{display:grid;gap:12px;align-content:start}select{width:100%;border:1px solid #d7e0ec;border-radius:12px;background:#fbfdff;padding:12px;color:var(--text);outline:none}textarea:focus,select:focus{border-color:#9fb2ff;box-shadow:0 0 0 3px rgba(49,85,217,.08)}#run{width:100%;box-shadow:none}#status{padding:0 22px 18px;min-height:1.5rem;color:#5f6e82}.result-area{padding:0 22px 22px}.answer-card,.passage{border:1px solid #dde5ef;border-radius:15px;padding:17px;margin:12px 0;background:#fbfdff}.answer-card pre{white-space:pre-wrap;margin:0;font-family:inherit;line-height:1.7}.meta{font-size:.82rem;color:#77869a;margin-bottom:7px}.passage p{margin:0;color:#4f5f74;line-height:1.68}.result-area h3{color:var(--navy)}
+    footer{padding:30px 0;color:#78869a;font-size:.88rem}.footer-row{display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap}
+    @media(max-width:900px){.hero{grid-template-columns:1fr;min-height:auto;padding-top:40px}.features{grid-template-columns:1fr}.strip-grid{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:0}.workspace-body{grid-template-columns:1fr}.links{display:none}}
   </style>
 </head>
 <body>
   <header class="shell nav">
-    <a class="brand" href="#top"><span class="logo">R</span><span>RAG Knowledge Assistant</span></a>
-    <nav class="links"><a href="#features">Capabilities</a><a href="#workbench">Workbench</a><a href="/docs">API Docs</a><a href="/health">Health</a></nav>
+    <a class="brand" href="#top"><span class="mark">R</span><span>RAG Knowledge Assistant</span></a>
+    <nav class="links"><a href="#capabilities">Capabilities</a><a href="#workspace">Assistant</a><a href="/docs">API Docs</a><a class="nav-cta" href="#workspace">Try it now</a></nav>
   </header>
 
   <main id="top">
     <section class="shell hero">
       <div>
-        <span class="eyebrow">● Source-grounded AI retrieval</span>
-        <h1>Ask better questions.<br><span class="accent">Get grounded answers.</span></h1>
-        <p class="lead">A practical Retrieval-Augmented Generation assistant that searches trusted local documents, ranks relevant passages, and can generate cited answers through a configured AI provider.</p>
-        <div class="actions"><a class="btn primary" href="#workbench">Try the assistant</a><a class="btn" href="/docs">Open API docs</a></div>
-        <div class="pills"><span class="pill">TF-IDF retrieval</span><span class="pill">Semantic retrieval</span><span class="pill">Cited answers</span><span class="pill">FastAPI</span></div>
+        <div class="eyebrow"><span class="pulse"></span> Grounded AI knowledge retrieval</div>
+        <h1>Turn trusted context into <span class="grad">reliable answers.</span></h1>
+        <p class="lead">RAG Knowledge Assistant retrieves relevant evidence from a local knowledge base, ranks the strongest passages, and can generate source-grounded answers with citations through a configured AI provider.</p>
+        <div class="actions"><a class="btn primary" href="#workspace">Ask the knowledge base</a><a class="btn" href="/docs">Explore the API</a></div>
+        <div class="micro"><span>Local retrieval</span><span>Semantic search</span><span>Source citations</span></div>
       </div>
-      <aside class="preview">
-        <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-        <div class="terminal"><strong>1. RETRIEVE</strong><br>Find the most relevant passages in the knowledge base.</div>
-        <div class="terminal"><strong>2. GROUND</strong><br>Provide trusted context before answer generation.</div>
-        <div class="terminal"><strong>3. CITE</strong><br>Return evidence-backed answers with visible source references.</div>
+      <aside class="hero-card">
+        <div class="window">
+          <div class="window-head"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span class="status-badge">● System ready</span></div>
+          <div class="flow">
+            <div class="flow-card"><div class="flow-icon">1</div><div><strong>Retrieve</strong><span>Find the passages most relevant to the user's question.</span></div></div>
+            <div class="flow-card"><div class="flow-icon">2</div><div><strong>Ground</strong><span>Supply trusted source context before answer generation.</span></div></div>
+            <div class="flow-card"><div class="flow-icon">3</div><div><strong>Answer + cite</strong><span>Return a concise response backed by visible source evidence.</span></div></div>
+          </div>
+          <div class="source-chip"><b>Source-aware by design:</b> evidence stays visible instead of being hidden behind the model response.</div>
+        </div>
       </aside>
     </section>
 
-    <section class="shell section" id="features">
-      <h2>Built for reliable AI answers</h2>
-      <p class="section-copy">Transparent retrieval first, optional AI generation second.</p>
+    <section class="strip">
+      <div class="shell strip-grid"><div class="stat"><b>TF-IDF</b><span>Deterministic local retrieval</span></div><div class="stat"><b>Semantic</b><span>Provider-assisted ranking</span></div><div class="stat"><b>Citations</b><span>Visible supporting sources</span></div><div class="stat"><b>FastAPI</b><span>Testable HTTP endpoints</span></div></div>
+    </section>
+
+    <section class="shell section" id="capabilities">
+      <div class="section-head"><div class="kicker">Capabilities</div><h2>Built for transparent, evidence-first AI.</h2><p class="section-copy">The retrieval layer works locally without an API key, while optional AI-provider features can add semantic ranking and cited answer generation.</p></div>
       <div class="features">
-        <article class="feature"><div class="icon">⌕</div><h3>Local retrieval</h3><p>Searches the included knowledge base with deterministic TF-IDF ranking and no API key.</p></article>
-        <article class="feature"><div class="icon">◇</div><h3>Semantic retrieval</h3><p>Uses a configured provider to rank content by semantic relevance when enabled.</p></article>
-        <article class="feature"><div class="icon">✓</div><h3>Cited answers</h3><p>Generates grounded responses from retrieved passages and exposes the supporting sources.</p></article>
+        <article class="feature"><div class="feature-icon">⌕</div><h3>Trusted retrieval</h3><p>Search local documents with deterministic TF-IDF ranking and inspect exactly what was retrieved.</p></article>
+        <article class="feature"><div class="feature-icon">◇</div><h3>Semantic relevance</h3><p>Enable model-assisted semantic ranking when a supported provider is configured.</p></article>
+        <article class="feature"><div class="feature-icon">✓</div><h3>Grounded responses</h3><p>Generate answers from retrieved passages while keeping the supporting evidence visible.</p></article>
       </div>
     </section>
 
-    <section class="shell section" id="workbench">
-      <h2>Knowledge workbench</h2>
-      <p class="section-copy">Ask a question, choose a retrieval mode, and inspect the evidence returned by the system.</p>
-      <div class="workbench">
-        <div class="workbench-grid">
-          <div>
-            <label for="query">Question</label>
-            <textarea id="query" placeholder="How can AI agents reduce unsupported claims?"></textarea>
+    <section class="workspace-wrap section" id="workspace">
+      <div class="shell">
+        <div class="section-head"><div class="kicker">Live assistant</div><h2>Ask your knowledge base.</h2><p class="section-copy">Use local TF-IDF retrieval immediately. Semantic retrieval and cited answers require a configured provider.</p></div>
+        <div class="workspace">
+          <div class="workspace-head"><div class="workspace-title">Knowledge Workbench</div><div class="api-links"><a href="/health">Health</a><a href="/docs">API Docs</a></div></div>
+          <div class="workspace-body">
+            <div><label for="query">Question</label><textarea id="query" placeholder="How can AI agents reduce unsupported claims?"></textarea></div>
+            <div class="controls"><label for="mode">Mode</label><select id="mode"><option value="search">TF-IDF retrieval</option><option value="semantic-search">Semantic retrieval</option><option value="answer">Cited answer</option></select><label for="topK">Number of sources</label><select id="topK"><option>1</option><option>2</option><option selected>3</option><option>5</option></select><button class="btn primary" id="run">Run query</button></div>
           </div>
-          <div class="controls">
-            <label for="mode">Mode</label>
-            <select id="mode"><option value="search">TF-IDF retrieval</option><option value="semantic-search">Semantic retrieval</option><option value="answer">Cited answer</option></select>
-            <label for="topK">Sources</label>
-            <select id="topK"><option>1</option><option>2</option><option selected>3</option><option>5</option></select>
-            <button class="btn primary" id="run">Run query</button>
-          </div>
+          <div id="status" role="status"></div><div class="result-area"><section id="answer"></section><section id="passages"></section></div>
         </div>
-        <div id="status" role="status"></div>
-        <section id="answer"></section>
-        <section id="passages"></section>
       </div>
     </section>
   </main>
 
-  <footer><div class="shell">RAG Knowledge Assistant · Source-grounded retrieval with transparent evidence.</div></footer>
+  <footer><div class="shell footer-row"><span>RAG Knowledge Assistant</span><span>Evidence-first retrieval · Local and provider-assisted modes</span></div></footer>
 
   <script>
     const query=document.querySelector('#query');const mode=document.querySelector('#mode');const topK=document.querySelector('#topK');const run=document.querySelector('#run');const status=document.querySelector('#status');const answer=document.querySelector('#answer');const passages=document.querySelector('#passages');
-    function esc(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+    function esc(v){return String(v).replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));}
     run.addEventListener('click',async()=>{const value=query.value.trim();if(value.length<3){status.textContent='Enter a question with at least 3 characters.';return;}run.disabled=true;status.textContent='Running…';answer.innerHTML='';passages.innerHTML='';try{const response=await fetch('/'+mode.value,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:value,top_k:Number(topK.value)})});const payload=await response.json();if(!response.ok)throw new Error(payload.detail||'Request failed');if(payload.answer){answer.innerHTML='<h3>Answer</h3><div class="answer-card"><pre>'+esc(payload.answer)+'</pre></div>';}passages.innerHTML='<h3>Sources</h3>'+payload.passages.map(p=>'<article class="passage"><div class="meta">#'+p.rank+' · score '+p.score.toFixed(4)+' · '+esc(p.source)+'</div><p>'+esc(p.text)+'</p></article>').join('');status.textContent='Indexed '+payload.indexed_chunks+' chunks.';}catch(error){status.textContent=error.message;}finally{run.disabled=false;}});
   </script>
 </body>
