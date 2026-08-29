@@ -19,7 +19,13 @@ class VectorRecord:
 class PgVectorStore:
     """Small pgvector-backed store with explicit schema and cosine search."""
 
-    def __init__(self, dsn: str | None = None, *, dimensions: int = 1536) -> None:
+    def __init__(self, dsn: str | None = None, *, dimensions: int | None = None) -> None:
+        if dimensions is None:
+            raw_dimensions = os.getenv("VECTOR_DIMENSIONS", "1536").strip()
+            try:
+                dimensions = int(raw_dimensions)
+            except ValueError as exc:
+                raise ValueError("VECTOR_DIMENSIONS must be an integer") from exc
         if dimensions <= 0:
             raise ValueError("dimensions must be greater than zero")
         self.dsn = dsn or os.getenv("DATABASE_URL", "")
