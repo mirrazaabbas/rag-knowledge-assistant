@@ -1,45 +1,60 @@
-# RAG Benchmark Plan
+# RAG Benchmarking
 
-A strong portfolio claim should be backed by measured results, not estimates. This project therefore separates the benchmark *method* from benchmark *results*.
+This project separates measured evidence from unverified claims. Retrieval metrics are generated in GitHub Actions against a pinned four-question benchmark corpus.
+
+## Latest verified CI sample
+
+GitHub Actions run `#52` executed the benchmark against the real PostgreSQL/pgvector service used by CI.
+
+| Metric | TF-IDF baseline | pgvector pipeline |
+|---|---:|---:|
+| Recall@3 | 1.00 | 1.00 |
+| MRR | 0.875 | 1.00 |
+| Median retrieval latency | 0.076 ms | 11.834 ms |
+
+These latency values are a single GitHub-hosted CI sample and are environment-dependent. They should not be treated as production latency guarantees.
+
+## What the pgvector benchmark proves
+
+The pgvector path uses a real PostgreSQL 16 server with the `vector` extension, persistent vector rows, cosine-distance search, and the same `PgVectorStore` implementation used by the application.
+
+The benchmark deliberately uses deterministic local two-dimensional feature vectors. This makes the database/retrieval pipeline reproducible without storing third-party API credentials in CI.
+
+**Therefore the pgvector figures verify retrieval plumbing and ranking behavior, not the quality of a commercial embedding model.** A live-provider benchmark remains a separate future measurement.
 
 ## Retrieval metrics
 
-For a labeled question set, record:
+- **Recall@3** — whether the labeled relevant document appears in the first three results.
+- **MRR** — mean reciprocal rank of the first labeled relevant result.
+- **Median retrieval latency** — median measured retrieval duration for the four benchmark cases in that CI run.
 
-- recall@k: whether a relevant chunk appears in the top-k results
-- mean reciprocal rank (MRR): how highly the first relevant chunk is ranked
-- citation coverage: whether answer claims have retrieved supporting passages
-- groundedness: whether generated statements are supported by retrieved context
+## Reproduce locally
 
-## Operational metrics
+Run the credential-free TF-IDF benchmark:
 
-Record at least:
+```bash
+python benchmark.py --output benchmark-results.json
+```
 
-- end-to-end latency
-- retrieval latency
-- provider latency
-- input/output token usage when available
-- estimated provider cost when pricing is known
-- error and timeout rates
+Run both paths against PostgreSQL/pgvector:
 
-## Comparison matrix
+```bash
+python benchmark.py \
+  --database-url postgresql://rag:rag@localhost:5432/rag \
+  --output benchmark-results.json
+```
 
-Compare the transparent TF-IDF baseline against the pgvector semantic path on the same labeled cases.
+GitHub Actions also uploads `benchmark-results.json` as the `retrieval-benchmark-results` workflow artifact so the raw output is preserved alongside the CI run.
 
-| Metric | TF-IDF baseline | pgvector semantic |
-|---|---:|---:|
-| Recall@3 | Not measured yet | Not measured yet |
-| MRR | Not measured yet | Not measured yet |
-| Median latency | Not measured yet | Not measured yet |
-| Citation coverage | Not measured yet | Not measured yet |
+## Future live-provider metrics
 
-Do not replace `Not measured yet` with numbers until the benchmark has actually been executed in a reproducible environment.
+When an external embedding/chat provider is deliberately tested, add a separate result set covering:
 
-## Reproducibility rules
+- provider/model names and embedding dimensions
+- Recall@k and MRR on a larger labeled corpus
+- citation coverage and groundedness
+- end-to-end, retrieval, and provider latency
+- token usage and estimated cost where available
+- errors and timeouts
 
-1. Pin the corpus and labeled question set.
-2. Record model/provider names and embedding dimensions.
-3. Run both retrieval paths against the same cases.
-4. Save raw results before summarizing averages.
-5. Report failures and timeouts rather than silently dropping them.
-6. Keep credential-free CI tests separate from paid live-provider benchmarks.
+No live-provider numbers should be published until that run is actually performed and recorded.
