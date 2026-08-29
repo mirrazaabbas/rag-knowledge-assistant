@@ -1,0 +1,1 @@
+Production APIs should expose health and readiness endpoints so platforms can detect process health and dependency readiness. Monitoring should also track latency, failures, timeouts, and service-level behavior.
