@@ -96,6 +96,12 @@ class PgVectorStore:
                 raise ValueError(
                     f"embedding length {len(row.embedding)} does not match {self.dimensions}"
                 )
+        try:
+            from pgvector import Vector
+        except ImportError as exc:  # pragma: no cover - environment dependent
+            raise RuntimeError(
+                "Production storage requires requirements-production.txt"
+            ) from exc
 
         with self._connect() as connection:
             with connection.cursor() as cursor:
@@ -107,7 +113,7 @@ class PgVectorStore:
                     DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding
                     """,
                     [
-                        (row.source, row.chunk_index, row.text, list(row.embedding))
+                        (row.source, row.chunk_index, row.text, Vector(row.embedding))
                         for row in rows
                     ],
                 )
@@ -121,6 +127,13 @@ class PgVectorStore:
             )
         if top_k < 1 or top_k > 50:
             raise ValueError("top_k must be between 1 and 50")
+        try:
+            from pgvector import Vector
+        except ImportError as exc:  # pragma: no cover - environment dependent
+            raise RuntimeError(
+                "Production storage requires requirements-production.txt"
+            ) from exc
+        query_vector = Vector(query_embedding)
 
         with self._connect() as connection:
             with connection.cursor() as cursor:
@@ -132,7 +145,7 @@ class PgVectorStore:
                     ORDER BY embedding <=> %s
                     LIMIT %s
                     """,
-                    (list(query_embedding), list(query_embedding), top_k),
+                    (query_vector, query_vector, top_k),
                 )
                 return [
                     {
