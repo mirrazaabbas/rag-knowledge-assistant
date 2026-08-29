@@ -129,6 +129,11 @@ class ApiTests(unittest.TestCase):
     def tearDown(self) -> None:
         api.provider_client_factory = self.original_factory
 
+    def test_home(self) -> None:
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("RAG Knowledge Assistant", response.text)
+
     def test_health(self) -> None:
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
