@@ -1,0 +1,1 @@
+API keys and database credentials belong in environment variables or a managed secret store, never committed to source control. Public services should use least-privilege access, request limits, safe logging, and credential rotation.
