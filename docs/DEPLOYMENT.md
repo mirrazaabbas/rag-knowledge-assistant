@@ -30,11 +30,17 @@ The repository includes `render.yaml`, which defines:
 - private database connection injection through `DATABASE_URL`
 - `/health` as the service health-check path
 - `VECTOR_DIMENSIONS=1536` for the default embedding model
-- optional OpenAI-compatible provider settings
+- an environment-managed provider secret for semantic retrieval and cited answers
 
-To deploy from the Render dashboard, create a new Blueprint from this GitHub repository. Render reads `render.yaml`, creates the web service and database, and injects the database connection string. `OPENAI_API_KEY` is declared as a secret prompt and must never be committed to the repository.
+The production Docker image binds to `0.0.0.0` and honors the platform-provided `PORT` environment variable, with local fallback to port `8000`.
 
-The application itself runs `CREATE EXTENSION IF NOT EXISTS vector` during pgvector schema initialization, so the managed database must support the vector extension.
+To deploy from the Render dashboard, create a new Blueprint from this GitHub repository. Render reads `render.yaml`, creates the web service and database, and injects the database connection string. `OPENAI_API_KEY` is configured as a secret prompt and must never be committed to the repository.
+
+The application runs `CREATE EXTENSION IF NOT EXISTS vector` during pgvector schema initialization, so the selected managed database must support the vector extension.
+
+### Free-tier accuracy boundary
+
+The Blueprint uses free service and database plans as a portfolio-demo starting point. Free infrastructure has tighter limits and should not be described as a production SLA. For a durable deployment, use an appropriate database plan and configure backups/retention for the use case.
 
 ## Environment variables
 
@@ -47,6 +53,7 @@ The application itself runs `CREATE EXTENSION IF NOT EXISTS vector` during pgvec
 | `EMBEDDING_MODEL` | Embedding model name |
 | `CHAT_MODEL` | Chat model name |
 | `PROVIDER_TIMEOUT_SECONDS` | Provider request timeout |
+| `PORT` | HTTP port supplied by the deployment platform |
 | `OTEL_ENABLED` | Enable OpenTelemetry FastAPI instrumentation |
 | `OTEL_SERVICE_NAME` | Service name emitted in traces |
 
@@ -74,7 +81,8 @@ Also verify HTTPS, application logs, database connectivity, and a clean restart/
 6. Use `/health` and `/readiness` for platform checks.
 7. Add provider budget/rate-limit controls before high-volume public use.
 8. Run prompt-injection tests before accepting arbitrary user-uploaded documents.
+9. Use a durable database plan with backups before relying on stored data.
 
 ## Accuracy boundary
 
-Infrastructure-as-code is now committed, and the pgvector path is verified in GitHub Actions. A public live-demo URL is only added to the README after the external cloud deployment itself has been created and checked.
+Infrastructure-as-code is committed, the production container is tested in CI, and the pgvector path is verified in GitHub Actions. A public live-demo URL is only added to the README after the external cloud deployment itself has been created and checked.

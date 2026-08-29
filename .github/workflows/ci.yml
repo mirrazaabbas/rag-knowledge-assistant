@@ -55,6 +55,32 @@ jobs:
             exit 1
           fi
 
+  container-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build production image
+        run: docker build -f Dockerfile.production -t rag-knowledge-assistant:ci .
+
+      - name: Run production image on platform-style PORT
+        run: |
+          docker run -d --name rag-container-ci -e PORT=10000 -p 10000:10000 rag-knowledge-assistant:ci
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:10000/health >/dev/null; then
+              curl --fail --silent http://127.0.0.1:10000/readiness
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs rag-container-ci
+          exit 1
+
+      - name: Stop production image
+        if: always()
+        run: docker rm -f rag-container-ci || true
+
   pgvector-integration:
     runs-on: ubuntu-latest
     services:
