@@ -33,7 +33,7 @@ class PgVectorStore:
             raise ValueError("DATABASE_URL is required for pgvector storage")
         self.dimensions = dimensions
 
-    def _connect(self):
+    def _connect(self, *, register_types: bool = True):
         try:
             import psycopg
             from pgvector.psycopg import register_vector
@@ -43,15 +43,29 @@ class PgVectorStore:
             ) from exc
 
         connection = psycopg.connect(self.dsn)
-        register_vector(connection)
+        if register_types:
+            try:
+                register_vector(connection)
+            except Exception:
+                connection.close()
+                raise
         return connection
 
     def ensure_schema(self) -> None:
         """Create pgvector extension, table, and HNSW cosine index if needed."""
+        try:
+            from pgvector.psycopg import register_vector
+        except ImportError as exc:  # pragma: no cover - environment dependent
+            raise RuntimeError(
+                "Production storage requires requirements-production.txt"
+            ) from exc
+
         vector_type = f"vector({self.dimensions})"
-        with self._connect() as connection:
+        with self._connect(register_types=False) as connection:
             with connection.cursor() as cursor:
                 cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
+            register_vector(connection)
+            with connection.cursor() as cursor:
                 cursor.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS rag_chunks (
