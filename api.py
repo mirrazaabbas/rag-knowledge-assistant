@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 import providers
+from observability import configure_observability
 
 BASE_DIR = Path(__file__).resolve().parent
 CORE_PATH = BASE_DIR / "app.py"
@@ -24,12 +26,14 @@ provider_client_factory = providers.create_provider_client
 
 app = FastAPI(
     title="RAG Knowledge Assistant API",
-    version="1.1.0",
+    version="1.2.0",
     description=(
-        "Source-grounded document retrieval with transparent TF-IDF ranking and optional "
-        "OpenAI-compatible semantic retrieval and cited answer generation."
+        "Source-grounded document retrieval with transparent TF-IDF ranking, optional "
+        "semantic retrieval and cited answer generation, plus production-ready "
+        "pgvector and observability building blocks."
     ),
 )
+configure_observability(app)
 
 
 class SearchRequest(BaseModel):
@@ -80,6 +84,18 @@ def home() -> FileResponse:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/readiness")
+def readiness() -> dict[str, str]:
+    """Report optional production dependency configuration without exposing secrets."""
+    return {
+        "status": "ready",
+        "vector_store": "configured" if os.getenv("DATABASE_URL") else "local-baseline",
+        "observability": "enabled"
+        if os.getenv("OTEL_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+        else "disabled",
+    }
 
 
 @app.post("/search", response_model=SearchResponse)
