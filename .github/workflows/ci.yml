@@ -32,7 +32,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Compile sources
-        run: python -m compileall -q app.py api.py providers.py tests
+        run: python -m compileall -q app.py api.py providers.py storage.py tests
 
       - name: Lint
         run: ruff check . --output-format=github
@@ -54,3 +54,42 @@ jobs:
             echo "Expected missing-key configuration to fail"
             exit 1
           fi
+
+  pgvector-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: rag
+          POSTGRES_USER: rag
+          POSTGRES_PASSWORD: rag
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rag -d rag"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://rag:rag@localhost:5432/rag
+      VECTOR_DIMENSIONS: "2"
+      RUN_PGVECTOR_INTEGRATION: "true"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install production and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-production.txt -r requirements-dev.txt
+
+      - name: Run pgvector integration tests
+        run: python -m unittest tests.test_pgvector_integration -v
