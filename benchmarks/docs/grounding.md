@@ -1,0 +1,1 @@
+Retrieval-augmented generation reduces unsupported claims by retrieving relevant source passages before answer generation. Grounded answers should cite those passages and avoid claims that are not supported by the retrieved context.
