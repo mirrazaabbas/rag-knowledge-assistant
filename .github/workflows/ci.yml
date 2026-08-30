@@ -29,10 +29,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements-dev.txt
+          python -m pip install -r requirements-dev.txt build
 
       - name: Compile sources
-        run: python -m compileall -q app.py api.py providers.py storage.py benchmark.py integration_contract.py tests
+        run: python -m compileall -q app.py api.py providers.py storage.py benchmark.py integration_contract.py src tests
 
       - name: Lint
         run: ruff check . --output-format=github
@@ -51,12 +51,23 @@ jobs:
       - name: Validate portfolio evidence contract
         run: python -c "import integration_contract as c; r=c.build_evaluation_record('q','a',[{'source':'s','text':'t'}]); assert not c.validate_evaluation_record(r)"
 
+      - name: Validate machine-readable evidence schema
+        run: python -c "import json; s=json.load(open('schemas/portfolio-evidence-v1.schema.json')); assert s['properties']['schema_version']['const']=='portfolio-evidence/v1'"
+
       - name: Provider configuration fails safely without secrets
         run: |
           if env -u OPENAI_API_KEY python -c "import providers; providers.ProviderConfig.from_env()"; then
             echo "Expected missing-key configuration to fail"
             exit 1
           fi
+
+      - name: Build installable package
+        run: python -m build
+
+      - name: Install wheel and smoke-test CLI
+        run: |
+          python -m pip install --force-reinstall dist/*.whl
+          rag-search --help
 
   container-build:
     runs-on: ubuntu-latest
