@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=75", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,13 +8,13 @@ version = "1.0.0"
 description = "Source-grounded RAG retrieval with FastAPI, pgvector, citations and observability."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{name = "Mir Raza Abbas"}]
 keywords = ["rag", "pgvector", "fastapi", "retrieval", "llm"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -43,7 +43,7 @@ Repository = "https://github.com/mirrazaabbas/rag-knowledge-assistant"
 Issues = "https://github.com/mirrazaabbas/rag-knowledge-assistant/issues"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = {rag_knowledge_assistant = "src/rag_knowledge_assistant"}
 py-modules = [
   "app",
   "api",
