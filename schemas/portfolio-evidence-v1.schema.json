@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mirrazaabbas/rag-knowledge-assistant/schemas/portfolio-evidence-v1.schema.json",
+  "title": "Portfolio Evidence v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "producer",
+    "query",
+    "output",
+    "retrieved_ids",
+    "citations",
+    "context",
+    "retrieval",
+    "tool_calls"
+  ],
+  "properties": {
+    "schema_version": {"const": "portfolio-evidence/v1"},
+    "producer": {"type": "string", "minLength": 1},
+    "query": {"type": "string", "minLength": 1},
+    "output": {"type": "string"},
+    "retrieved_ids": {"type": "array", "items": {"type": "string"}},
+    "citations": {"type": "array", "items": {"type": "string"}},
+    "context": {"type": "array", "items": {"type": "string"}},
+    "retrieval": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "rank", "score"],
+        "properties": {
+          "id": {"type": "string"},
+          "rank": {"type": "integer", "minimum": 1},
+          "score": {"type": "number"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "tool_calls": {"type": "array", "items": {"type": "object"}},
+    "latency_ms": {"type": "number", "minimum": 0},
+    "runtime_events": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": true
+}
