@@ -32,7 +32,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Compile sources
-        run: python -m compileall -q app.py api.py providers.py storage.py benchmark.py tests
+        run: python -m compileall -q app.py api.py providers.py storage.py benchmark.py integration_contract.py tests
 
       - name: Lint
         run: ruff check . --output-format=github
@@ -47,6 +47,9 @@ jobs:
 
       - name: Import API
         run: python -c "import api; assert api.health()['status'] == 'ok'"
+
+      - name: Validate portfolio evidence contract
+        run: python -c "import integration_contract as c; r=c.build_evaluation_record('q','a',[{'source':'s','text':'t'}]); assert not c.validate_evaluation_record(r)"
 
       - name: Provider configuration fails safely without secrets
         run: |
@@ -171,7 +174,6 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:8010/health >/dev/null
 
-          # BatchSpanProcessor exports on an interval; give it time to deliver.
           sleep 7
 
           for attempt in {1..15}; do
