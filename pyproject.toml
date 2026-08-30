@@ -43,7 +43,7 @@ Repository = "https://github.com/mirrazaabbas/rag-knowledge-assistant"
 Issues = "https://github.com/mirrazaabbas/rag-knowledge-assistant/issues"
 
 [tool.setuptools]
-package-dir = {rag_knowledge_assistant = "src/rag_knowledge_assistant"}
+packages = ["rag_knowledge_assistant"]
 py-modules = [
   "app",
   "api",
@@ -56,8 +56,8 @@ py-modules = [
   "ai_platform",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools.package-dir]
+rag_knowledge_assistant = "src/rag_knowledge_assistant"
 
 [tool.ruff]
 line-length = 100
