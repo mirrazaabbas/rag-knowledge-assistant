@@ -1,5 +1,5 @@
 -r requirements.txt
-coverage[toml]>=7.6,<8.0
+coverage[toml]>=7.15.4,<8.0
 # Starlette 1.x uses httpx2 for its TestClient implementation.
-httpx2>=2.0,<3.0
-ruff>=0.8,<1.0
+httpx2>=2.12.0,<3.0
+ruff>=0.16.5,<1.0
